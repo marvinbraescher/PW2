@@ -9,8 +9,11 @@
 package dev.rpmhub.web;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import dev.rpmhub.client.CatalogRC;
@@ -30,6 +33,8 @@ public class ManagementWS {
     /** Logger */
     private static final Logger LOGGER = Logger.getLogger(ManagementWS.class.getName());
 
+    private AtomicLong counter = new AtomicLong(0);
+
     @RestClient
     @Inject
     CatalogRC catalog;
@@ -43,7 +48,10 @@ public class ManagementWS {
     @Path("/listBooks")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("User")
+    @Timeout(1000)
+    @CircuitBreaker(requestVolumeThreshold = 2)
     public List<Book> listBooksAvailable() {
+        this.roletaRussa();
         LOGGER.info("ManagementWS listBooksAvailable executed");
         return catalog.listBooksAvailable();
     }
@@ -61,5 +69,14 @@ public class ManagementWS {
     @RolesAllowed("User")
     public List<Book> markNotAvailable(String json) {
         return catalog.markNotAvailable(json);
+    }
+
+    private void roletaRussa() {
+        // introduce some artificial failures
+        final Long invocationNumber = counter.getAndIncrement();
+        // alternate 2 successful and 2 failing invocations
+        if (invocationNumber % 4 > 1) {
+            throw new RuntimeException("Falho meu");
+        }
     }
 }

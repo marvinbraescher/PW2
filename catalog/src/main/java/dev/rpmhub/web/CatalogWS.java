@@ -91,11 +91,16 @@ public class CatalogWS {
      * Loads books into the catalog.
      */
     private void loadBooks() {
-        Book book = new Book();
-        book.setTitle("The Hitchhiker's Guide to the Galaxy");
-        book.setAuthor("Douglas Adams");
-        book.setIsbn("0345391802");
-        book.setAvailable(true);
-        books.add(book);
+        
+        for (int i = 0; i < 1000; i++) {
+
+            Book book = new Book();
+            book.setTitle("The Hitchhiker's Guide to the Galaxy");
+            book.setAuthor("Douglas Adams");
+            book.setIsbn("0345391802");
+            book.setAvailable(true);
+            books.add(book);
+
+        }
     }
 }

@@ -11,7 +11,9 @@ package dev.rpmhub;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.jwt.Claims;
+import org.jboss.resteasy.reactive.server.jaxrs.ResponseBuilderImpl;
 
 import io.smallrye.jwt.build.Jwt;
 import io.vertx.core.json.JsonObject;
@@ -20,7 +22,9 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Represents a web service for managing users.
@@ -46,11 +50,20 @@ public class Users {
     @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
+    @Retry(maxRetries = 3, delay = 2000)
     public String generate(final String json) {
 
         JsonObject  jsonObject = new JsonObject(json);
         String email = jsonObject.getString("email");
         String fullName = jsonObject.getString("fullName");
+
+           if (fullName.equalsIgnoreCase("error")) {
+        ResponseBuilderImpl builder = new ResponseBuilderImpl();
+        builder.status(Response.Status.INTERNAL_SERVER_ERROR);
+        builder.entity("Tem um cara chamado erro ae meu");
+        Response response = builder.build();
+        throw new WebApplicationException(response);
+    }
 
         return Jwt.issuer(ISSUER)
                 .upn(email)
